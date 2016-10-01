@@ -1,6 +1,7 @@
 import Foundation
 import APIKit
 import XCTest
+import Dispatch
 
 class URLSessionAdapterTests: XCTestCase {
     var session: Session!
