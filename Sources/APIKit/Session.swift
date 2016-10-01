@@ -11,6 +11,8 @@ open class Session {
     /// The default callback queue for `send(_:handler:)`.
     public let callbackQueue: CallbackQueue
 
+    internal var requests = [Int: Any]()
+
     /// Returns `Session` instance that is initialized with `adapter`.
     /// - parameter adapter: The adapter that connects lower level backend with Session interface.
     /// - parameter callbackQueue: The default callback queue for `send(_:handler:)`.
@@ -56,18 +58,27 @@ open class Session {
     /// - returns: The new session task.
     @discardableResult
     open func send<Request: APIKit.Request>(_ request: Request, callbackQueue: CallbackQueue? = nil, handler: @escaping (Result<Request.Response, SessionTaskError>) -> Void = { _ in }) -> SessionTask? {
-        let callbackQueue = callbackQueue ?? self.callbackQueue
+        func callback(_ result: Result<Request.Response, SessionTaskError>, taskIdentifier: Int? = nil) {
+            if let taskIdentifier = taskIdentifier {
+                requests[taskIdentifier] = nil
+            }
+            
+            let callbackQueue = callbackQueue ?? self.callbackQueue
+
+            callbackQueue.execute {
+                handler(result)
+            }
+        }
 
         let urlRequest: URLRequest
         do {
             urlRequest = try request.buildURLRequest()
         } catch {
-            callbackQueue.execute {
-                handler(.failure(.requestError(error)))
-            }
+            callback(.failure(.requestError(error)))
             return nil
         }
 
+        var taskIdentifier: Int?
         let task = adapter.createTask(with: urlRequest) { data, urlResponse, error in
             let result: Result<Request.Response, SessionTaskError>
 
@@ -86,12 +97,12 @@ open class Session {
                 result = .failure(.responseError(ResponseError.nonHTTPURLResponse(urlResponse)))
             }
 
-            callbackQueue.execute {
-                handler(result)
-            }
+            callback(result, taskIdentifier: taskIdentifier)
         }
 
-        setRequest(request, forTask: task)
+        taskIdentifier = task.taskIdentifier
+        requests[task.taskIdentifier] = request
+
         task.resume()
 
         return task
@@ -104,7 +115,7 @@ open class Session {
         adapter.getTasks { [weak self] tasks in
             return tasks
                 .filter { task in
-                    if let request = self?.requestForTask(task) as Request? {
+                    if let request = self?.requests[task.taskIdentifier] as? Request {
                         return test(request)
                     } else {
                         return false
@@ -112,13 +123,5 @@ open class Session {
                 }
                 .forEach { $0.cancel() }
         }
-    }
-
-    private func setRequest<Request: APIKit.Request>(_ request: Request, forTask task: SessionTask) {
-        objc_setAssociatedObject(task, &taskRequestKey, request, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-    }
-
-    private func requestForTask<Request: APIKit.Request>(_ task: SessionTask) -> Request? {
-        return objc_getAssociatedObject(task, &taskRequestKey) as? Request
     }
 }

@@ -41,6 +41,7 @@ class URLSessionAdapterTests: XCTestCase {
 
         waitForExpectations(timeout: 10.0, handler: nil)
         
+        XCTAssert(session.requests.isEmpty)
         XCTAssert(adapter.taskProperties.isEmpty)
     }
     
@@ -70,7 +71,8 @@ class URLSessionAdapterTests: XCTestCase {
         }
         
         waitForExpectations(timeout: 10.0, handler: nil)
-        
+
+        XCTAssert(session.requests.isEmpty)
         XCTAssert(adapter.taskProperties.isEmpty)
     }
 
@@ -99,7 +101,8 @@ class URLSessionAdapterTests: XCTestCase {
         }
 
         waitForExpectations(timeout: 10.0, handler: nil)
-        
+
+        XCTAssert(session.requests.isEmpty)
         XCTAssert(adapter.taskProperties.isEmpty)
     }
 }
