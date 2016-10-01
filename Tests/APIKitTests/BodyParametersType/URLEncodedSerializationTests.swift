@@ -69,19 +69,20 @@ class URLEncodedSerializationTests: XCTestCase {
     }
 
     func testNonDictionaryObject() {
-        let dictionaries = [["hey": "yo"]] as Any
+        let array = ["hey", "yo"]
 
         do {
-            try _ = URLEncodedSerialization.data(from: dictionaries, encoding: .utf8)
+            try _ = URLEncodedSerialization.data(from: array, encoding: .utf8)
             XCTFail()
         } catch {
             guard let error = error as? URLEncodedSerialization.Error,
-                  case .cannotCastObjectToDictionary(let object) = error else {
+                  case .cannotCastObjectToDictionary(let failedArray as [String]) = error else {
                 XCTFail()
                 return
             }
 
-            XCTAssertEqual((object as AnyObject)["hey"], (dictionaries as AnyObject)["hey"])
+
+            XCTAssertEqual(array, failedArray)
         }
     }
 }
