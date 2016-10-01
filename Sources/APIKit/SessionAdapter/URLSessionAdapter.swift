@@ -13,10 +13,10 @@ extension URLSessionTask: SessionTask {
 /// `super` in these methods if you implement them.
 open class URLSessionAdapter: NSObject, SessionAdapter, URLSessionDelegate, URLSessionTaskDelegate, URLSessionDataDelegate {
     internal final class TaskProperty {
-        let buffer: NSMutableData
+        var buffer: Data
         let handler: (Data?, URLResponse?, Error?) -> Void
         
-        init(buffer: NSMutableData = NSMutableData(), handler: @escaping (Data?, URLResponse?, Error?) -> Void) {
+        init(buffer: Data = Data(), handler: @escaping (Data?, URLResponse?, Error?) -> Void) {
             self.buffer = buffer
             self.handler = handler
         }
@@ -57,7 +57,7 @@ open class URLSessionAdapter: NSObject, SessionAdapter, URLSessionDelegate, URLS
     // MARK: URLSessionTaskDelegate
     open func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         let taskProperty = taskProperties[task.taskIdentifier]
-        taskProperty?.handler(taskProperty?.buffer as Data?, task.response, error)
+        taskProperty?.handler(taskProperty?.buffer, task.response, error)
 
         taskProperties[task.taskIdentifier] = nil
     }
