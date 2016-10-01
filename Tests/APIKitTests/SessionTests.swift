@@ -62,7 +62,7 @@ class SessionTests: XCTestCase {
     }
 
     func testUnacceptableStatusCodeError() {
-        adapter.urlResponse = HTTPURLResponse(url: NSURL(string: "")! as URL, statusCode: 400, httpVersion: nil, headerFields: nil)
+        adapter.urlResponse = HTTPURLResponse(url: URL(string: "https://example.com")!, statusCode: 400, httpVersion: nil, headerFields: nil)
 
         let expectation = self.expectation(description: "wait for response")
         let request = TestRequest()
