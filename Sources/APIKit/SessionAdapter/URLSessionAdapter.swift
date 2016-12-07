@@ -38,7 +38,7 @@ open class URLSessionAdapter: NSObject, SessionAdapter, URLSessionDelegate, URLS
         let task = urlSession.dataTask(with: URLRequest)
         taskProperties[task.taskIdentifier] = TaskProperty(handler: handler)
 
-        task.resume()
+        // task.resume()
 
         return task
     }
